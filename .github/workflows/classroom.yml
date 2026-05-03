@@ -1,0 +1,42 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: 'Teste 1: Compila'
+      id: teste-1-compila
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: 'Teste 1: Compila'
+        setup-command: javac Resposta01VetorSupermercado.java
+        command: gradle test
+        timeout: 10
+        max-score: 4
+    - name: 'Nome: Total e média corretos'
+      id: nome-total-e-media-corretos
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: 'Nome: Total e média corretos'
+        setup-command: 'printf "1000\n1200\n2000\n3200\n3100\n" | java -cp exercicios/respostas
+          Resposta01VetorSupermercado > out.txt && grep -q "Total do dia: 10500.00"
+          out.txt && grep -q "Media por caixa: 2100.00" out.txt'
+        command: gradle test
+        timeout: 10
+        max-score: 6
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        TESTE-1-COMPILA_RESULTS: "${{steps.teste-1-compila.outputs.result}}"
+        NOME-TOTAL-E-MEDIA-CORRETOS_RESULTS: "${{steps.nome-total-e-media-corretos.outputs.result}}"
+      with:
+        runners: teste-1-compila,nome-total-e-media-corretos
